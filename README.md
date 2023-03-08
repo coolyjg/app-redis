@@ -38,7 +38,7 @@ $ ip a s virbr0
 
 Now we start the virtual machine and pass it the proper arguments to assign the IP address `172.44.0.2/24`:
 ```
-$ kraft run -b virbr0 "netdev.ipv4_addr=172.44.0.2 netdev.ipv4_gw_addr=172.44.0.1 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf"
+$ kraft run -b virbr0 "netdev.ipv4_addr=192.168.122.4 netdev.ipv4_gw_addr=172.44.0.1 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf"
 [...]
 0: Set IPv4 address 172.44.0.2 mask 255.255.255.0 gw 172.44.0.1
 en0: Added
@@ -106,8 +106,20 @@ sudo qemu-system-x86_64 -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none
                         -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
                         -netdev bridge,id=en0,br=virbr0 \
                         -device virtio-net-pci,netdev=en0 \
-                        -kernel "build/app-redis_kvm-x86_64" \
-                        -append "netdev.ipv4_addr=172.44.0.2 netdev.ipv4_gw_addr=172.44.0.1 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf" \
+                        -kernel "build/redis_kvm-x86_64" \
+                        -append "netdev.ipv4_addr=192.168.122.4 netdev.ipv4_gw_addr=172.44.0.1 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf" \
+                        -cpu host \
+                        -enable-kvm \
+                        -nographic
+```
+
+```
+sudo qemu-system-x86_64 -fsdev local,id=myid,path=$(pwd)/fs0,security_model=none \
+                        -device virtio-9p-pci,fsdev=myid,mount_tag=fs0,disable-modern=on,disable-legacy=off \
+                        -netdev user,id=en0,hostfwd=tcp::5555-:5555 \
+                        -device virtio-net-pci,netdev=en0 \
+                        -kernel "build/redis_kvm-x86_64" \
+                        -append "netdev.ipv4_addr=10.0.2.5 netdev.ipv4_gw_addr=10.0.2.2 netdev.ipv4_subnet_mask=255.255.255.0 -- /redis.conf" \
                         -cpu host \
                         -enable-kvm \
                         -nographic
